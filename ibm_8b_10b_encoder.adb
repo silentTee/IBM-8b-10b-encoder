@@ -1,91 +1,4 @@
-package body IBM_8b_10b_Encoder is
------------8 to 10 bit encoding table construction necessities--------------
-    Table_5to6_Bits: array(Byte range 0 .. 31, 0 .. 1) of Ten_Bits :=
-    ((2#111001#, 2#000110#),
-	 (2#101110#, 2#010001#),
-	 (2#101101#, 2#010010#),
-	 (2#100011#, 2#100011#),
-	 (2#101011#, 2#010100#),
-	 (2#100101#, 2#100101#),
-	 (2#100110#, 2#100110#),
-	 (2#000111#, 2#111000#),
-	 (2#100111#, 2#011000#),
-	 (2#101001#, 2#101001#),
-	 (2#101010#, 2#101010#),
-	 (2#001011#, 2#001011#),
-	 (2#101100#, 2#101100#),
-	 (2#001101#, 2#001101#),
-	 (2#001110#, 2#001110#),
-	 (2#111010#, 2#000101#),
-	 (2#110110#, 2#001001#),
-	 (2#110001#, 2#110001#),
-	 (2#110010#, 2#110010#),
-	 (2#010011#, 2#010011#),
-	 (2#110100#, 2#110100#),
-	 (2#010101#, 2#010101#),
-	 (2#010110#, 2#010110#),
-	 (2#010111#, 2#101000#),
-	 (2#110011#, 2#001100#),
-	 (2#011001#, 2#011001#),
-	 (2#011010#, 2#011010#),
-	 (2#011011#, 2#100100#),
-	 (2#011100#, 2#011100#),
-	 (2#011101#, 2#100010#),
-	 (2#011110#, 2#100001#),
-	 (2#110101#, 2#001010#));
-    
-    Table_3to4_Bits: array(Byte range 0 .. 7, 0 .. 3) of Ten_Bits :=
-    --RD -1, RD +1
-	((2#1101#, 2#0010#, -1, -1),
-	 (2#1001#, 2#1001#, -1, -1),
-	 (2#1010#, 2#1010#, -1, -1),
-	 (2#0011#, 2#1100#, -1, -1),
-	 (2#1011#, 2#0100#, -1, -1),
-	 (2#0101#, 2#0101#, -1, -1),
-	 (2#0110#, 2#0110#, -1, -1),
-
-	--||---Primary----|||---Alternate---||
-	--RD -1   , RD +1  | RD -1  , RD +1
-	 (2#0111#, 2#1000#, 2#1110#, 2#0001#));    
-    
-        
-    NO  : Boolean := False;
-    YES : Boolean := True;
-    Changes_Running_Disp: array(Byte range 0 .. 31) of Boolean :=
-    (
-        NO ,
-	    NO ,
-	    NO ,
-	    YES,
-	    NO ,
-	    YES,
-	    YES,
-	    YES,
-	    NO ,
-	    YES,
-	    YES,
-	    YES,
-	    YES,
-	    YES,
-	    YES,
-	    NO ,
-	    NO ,
-	    YES,
-	    YES,
-	    YES,
-	    YES,
-	    YES,
-	    YES,
-	    NO ,
-	    NO ,
-	    YES,
-	    YES,
-	    NO ,
-	    YES,
-	    NO ,
-	    NO ,
-	    NO
-    );
+package body IBM_8b_10b_Encoder is    
     
     type Encoder_Table_Entry is
     record
@@ -93,13 +6,6 @@ package body IBM_8b_10b_Encoder is
         RD_Pos_Val : Ten_Bits;
         RD_Changes : Boolean;
     end record;
-    
-    Old_Right, Old_Left: Byte := 0;
-    Encoded_Left_Pos, Encoded_Left_Neg, 
-    Encoded_Right_Pos, Encoded_Right_Neg: Ten_Bits := 0;
-    RD_Change_Idx: Byte;
-    
-----END 8 to 10 bit encoding table construction necessities--------------------
     
     Table_8to10_Bits: array(Byte) of Encoder_Table_Entry;
     
@@ -130,62 +36,157 @@ package body IBM_8b_10b_Encoder is
         null;
     end Decode;
 begin
-    for I in Byte range 0 .. 255 loop
-        Old_Right := I and 2#000_11111#;
-        Old_Left := (I and 2#111_00000#) / 2**5;
+    declare
+        --8 to 10 bit encoding table construction necessities (all are temporary)
+        Table_5to6_Bits: array(Byte range 0 .. 31, 0 .. 1) of Ten_Bits :=
+        ((2#111001#, 2#000110#),
+	     (2#101110#, 2#010001#),
+	     (2#101101#, 2#010010#),
+	     (2#100011#, 2#100011#),
+	     (2#101011#, 2#010100#),
+	     (2#100101#, 2#100101#),
+	     (2#100110#, 2#100110#),
+	     (2#000111#, 2#111000#),
+	     (2#100111#, 2#011000#),
+	     (2#101001#, 2#101001#),
+	     (2#101010#, 2#101010#),
+	     (2#001011#, 2#001011#),
+	     (2#101100#, 2#101100#),
+	     (2#001101#, 2#001101#),
+	     (2#001110#, 2#001110#),
+	     (2#111010#, 2#000101#),
+	     (2#110110#, 2#001001#),
+	     (2#110001#, 2#110001#),
+	     (2#110010#, 2#110010#),
+	     (2#010011#, 2#010011#),
+	     (2#110100#, 2#110100#),
+	     (2#010101#, 2#010101#),
+	     (2#010110#, 2#010110#),
+	     (2#010111#, 2#101000#),
+	     (2#110011#, 2#001100#),
+	     (2#011001#, 2#011001#),
+	     (2#011010#, 2#011010#),
+	     (2#011011#, 2#100100#),
+	     (2#011100#, 2#011100#),
+	     (2#011101#, 2#100010#),
+	     (2#011110#, 2#100001#),
+	     (2#110101#, 2#001010#));
         
-        --Encoding the right 5 bits is easy, but encoding the left
-        --3 bits requires following a very specific pattern...
-        Encoded_Right_Neg := Table_5to6_Bits(Old_Right, 0);
-        Encoded_Right_Pos := Table_5to6_Bits(Old_Right, 1);
+        Table_3to4_Bits: array(Byte range 0 .. 7, 0 .. 3) of Ten_Bits :=
+        --RD -1, RD +1
+	    ((2#1101#, 2#0010#, -1, -1),
+	     (2#1001#, 2#1001#, -1, -1),
+	     (2#1010#, 2#1010#, -1, -1),
+	     (2#0011#, 2#1100#, -1, -1),
+	     (2#1011#, 2#0100#, -1, -1),
+	     (2#0101#, 2#0101#, -1, -1),
+	     (2#0110#, 2#0110#, -1, -1),
+
+	    --||---Primary----|||---Alternate---||
+	    --RD -1   , RD +1  | RD -1  , RD +1
+	     (2#0111#, 2#1000#, 2#1110#, 2#0001#));    
         
-        if Old_Left < 2#111# then
-            --when the encoding of the right bits is the same regardless
-		    --of the running disparity (7 is an exception because it has 
-		    --equal 0s and 1s), the 5 bit encoding for (-) RD is paired with 
-		    --the 3 bit encoding for (-) RD, and (+) with (+)
-		    if Encoded_Right_Neg = Encoded_Right_Pos or Old_Right = 7 then
-		        Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 0);
-		        Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 1);
-	        else
-	            Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 1);
-		        Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 0);
-	        end if;
+            
+        NO  : Boolean := False;
+        YES : Boolean := True;
+        Changes_Running_Disp: array(Byte range 0 .. 31) of Boolean :=
+        (
+            NO ,
+	        NO ,
+	        NO ,
+	        YES,
+	        NO ,
+	        YES,
+	        YES,
+	        YES,
+	        NO ,
+	        YES,
+	        YES,
+	        YES,
+	        YES,
+	        YES,
+	        YES,
+	        NO ,
+	        NO ,
+	        YES,
+	        YES,
+	        YES,
+	        YES,
+	        YES,
+	        YES,
+	        NO ,
+	        NO ,
+	        YES,
+	        YES,
+	        NO ,
+	        YES,
+	        NO ,
+	        NO ,
+	        NO
+        );
         
-        --when the 3 left bits to encode are "111", there are unique
-	    --circumstances where an alternate output needs to be used
-        else
-            if Encoded_Right_Neg = Encoded_Right_Pos or Old_Right = 7 then
-                if Old_Right /= 17 and Old_Right /= 18 and Old_Right /= 20 then
-                    Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 0);
-                else
-                    Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 2);
-                end if;
-                
-                if Old_Right /= 11 and Old_Right /= 13 and Old_Right /= 14 then
-                    Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 1);
-                else
-                    Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 3);
-                end if;
+        Old_Right, Old_Left: Byte := 0;
+        Encoded_Left_Pos, Encoded_Left_Neg, 
+        Encoded_Right_Pos, Encoded_Right_Neg: Ten_Bits := 0;
+        RD_Change_Idx: Byte;
+    begin
+        for I in Byte range 0 .. 255 loop
+            Old_Right := I and 2#000_11111#;
+            Old_Left := (I and 2#111_00000#) / 2**5;
+            
+            --Encoding the right 5 bits is easy, but encoding the left
+            --3 bits requires following a very specific pattern...
+            Encoded_Right_Neg := Table_5to6_Bits(Old_Right, 0);
+            Encoded_Right_Pos := Table_5to6_Bits(Old_Right, 1);
+            
+            if Old_Left < 2#111# then
+                --when the encoding of the right bits is the same regardless
+		        --of the running disparity (7 is an exception because it has 
+		        --equal 0s and 1s), the 5 bit encoding for (-) RD is paired with 
+		        --the 3 bit encoding for (-) RD, and (+) with (+)
+		        if Encoded_Right_Neg = Encoded_Right_Pos or Old_Right = 7 then
+		            Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 0);
+		            Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 1);
+	            else
+	                Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 1);
+		            Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 0);
+	            end if;
+            
+            --when the 3 left bits to encode are "111", there are unique
+	        --circumstances where an alternate output needs to be used
             else
-                Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 1);
-                Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 0);
+                if Encoded_Right_Neg = Encoded_Right_Pos or Old_Right = 7 then
+                    if Old_Right /= 17 and Old_Right /= 18 and Old_Right /= 20 then
+                        Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 0);
+                    else
+                        Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 2);
+                    end if;
+                    
+                    if Old_Right /= 11 and Old_Right /= 13 and Old_Right /= 14 then
+                        Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 1);
+                    else
+                        Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 3);
+                    end if;
+                else
+                    Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 1);
+                    Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 0);
+                end if;
             end if;
-        end if;
-        
-        RD_Change_Idx := I mod 32;
-        
-        declare
-            E: Encoder_Table_Entry;
-        begin
-            E.RD_Neg_Val := (Encoded_Left_Neg * 2**6) or Encoded_Right_Neg;
-            E.RD_Pos_Val := (Encoded_Left_Pos * 2**6) or Encoded_Right_Pos;
-            if Old_Left = 2#000# or Old_Left = 2#100# or Old_Left = 2#111# then
-                E.RD_Changes := Changes_Running_Disp(RD_Change_Idx);
-            else
-                E.RD_Changes := not Changes_Running_Disp(RD_Change_Idx);
-            end if;
-            Table_8to10_Bits(I) := E;
-        end;
-    end loop;
+            
+            RD_Change_Idx := I mod 32;
+            
+            declare
+                E: Encoder_Table_Entry;
+            begin
+                E.RD_Neg_Val := (Encoded_Left_Neg * 2**6) or Encoded_Right_Neg;
+                E.RD_Pos_Val := (Encoded_Left_Pos * 2**6) or Encoded_Right_Pos;
+                if Old_Left = 2#000# or Old_Left = 2#100# or Old_Left = 2#111# then
+                    E.RD_Changes := Changes_Running_Disp(RD_Change_Idx);
+                else
+                    E.RD_Changes := not Changes_Running_Disp(RD_Change_Idx);
+                end if;
+                Table_8to10_Bits(I) := E;
+            end;
+        end loop;
+    end;
 end IBM_8b_10b_Encoder;
