@@ -1,4 +1,8 @@
+with Ada.Containers.Ordered_Maps;
 package body IBM_8b_10b_Encoder is    
+    
+    package Ten_to_Eight_Map is new Ada.Containers.Ordered_Maps(Ten_Bits, Byte);
+    use Ten_to_Eight_Map;
     
     type Encoder_Table_Entry is
     record
@@ -8,6 +12,8 @@ package body IBM_8b_10b_Encoder is
     end record;
     
     Table_8to10_Bits: array(Byte) of Encoder_Table_Entry;
+    Table_10to8_Bits_RD_Neg: Map;
+    Table_10to8_Bits_RD_Pos: Map;
     
     procedure Encode(B: in Byte; T: out Ten_Bits; RD: in out Running_Disp) is
     begin
@@ -28,7 +34,18 @@ package body IBM_8b_10b_Encoder is
     --To verify that Running Disparity is being preserved, use this version
     procedure Decode(T: in Ten_Bits; B: out Byte; RD: in out Running_Disp) is
     begin
-        null;
+        case RD is
+            when Neg_1 =>   B := Element(Table_10to8_Bits_RD_Neg, T);
+                            case Table_8to10_Bits(B).RD_Changes is
+                                when False => RD := Neg_1;
+                                when True  => RD := Pos_1;
+                            end case;
+            when Pos_1 =>   B := Element(Table_10to8_Bits_RD_Pos, T);
+                            case Table_8to10_Bits(B).RD_Changes is
+                                when False => RD := Pos_1;
+                                when True  => RD := Neg_1;
+                            end case;
+        end case;
     end Decode;
 
     procedure Decode(T: in Ten_Bits; B: out Byte) is
@@ -178,6 +195,7 @@ begin
             declare
                 E: Encoder_Table_Entry;
             begin
+                --Add an entry to the encoding table...
                 E.RD_Neg_Val := (Encoded_Left_Neg * 2**6) or Encoded_Right_Neg;
                 E.RD_Pos_Val := (Encoded_Left_Pos * 2**6) or Encoded_Right_Pos;
                 if Old_Left = 2#000# or Old_Left = 2#100# or Old_Left = 2#111# then
@@ -186,6 +204,10 @@ begin
                     E.RD_Changes := not Changes_Running_Disp(RD_Change_Idx);
                 end if;
                 Table_8to10_Bits(I) := E;
+                
+                --...and add the flipped keys and values to the decoding tables
+                Insert(Table_10to8_Bits_RD_Neg, E.RD_Neg_Val, I);
+                Insert(Table_10to8_Bits_RD_Pos, E.RD_Pos_Val, I);
             end;
         end loop;
     end;
