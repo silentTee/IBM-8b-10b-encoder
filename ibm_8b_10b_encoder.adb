@@ -127,51 +127,51 @@ begin
         --8 to 10 bit encoding table construction necessities (all are temporary)
         Table_5to6_Bits: array(Byte range 0 .. 31, 0 .. 1) of Ten_Bits :=
         ((2#111001#, 2#000110#),
-	     (2#101110#, 2#010001#),
-	     (2#101101#, 2#010010#),
-	     (2#100011#, 2#100011#),
-	     (2#101011#, 2#010100#),
-	     (2#100101#, 2#100101#),
-	     (2#100110#, 2#100110#),
-	     (2#000111#, 2#111000#),
-	     (2#100111#, 2#011000#),
-	     (2#101001#, 2#101001#),
-	     (2#101010#, 2#101010#),
-	     (2#001011#, 2#001011#),
-	     (2#101100#, 2#101100#),
-	     (2#001101#, 2#001101#),
-	     (2#001110#, 2#001110#),
-	     (2#111010#, 2#000101#),
-	     (2#110110#, 2#001001#),
-	     (2#110001#, 2#110001#),
-	     (2#110010#, 2#110010#),
-	     (2#010011#, 2#010011#),
-	     (2#110100#, 2#110100#),
-	     (2#010101#, 2#010101#),
-	     (2#010110#, 2#010110#),
-	     (2#010111#, 2#101000#),
-	     (2#110011#, 2#001100#),
-	     (2#011001#, 2#011001#),
-	     (2#011010#, 2#011010#),
-	     (2#011011#, 2#100100#),
-	     (2#011100#, 2#011100#),
-	     (2#011101#, 2#100010#),
-	     (2#011110#, 2#100001#),
-	     (2#110101#, 2#001010#));
+         (2#101110#, 2#010001#),
+         (2#101101#, 2#010010#),
+         (2#100011#, 2#100011#),
+         (2#101011#, 2#010100#),
+         (2#100101#, 2#100101#),
+         (2#100110#, 2#100110#),
+         (2#000111#, 2#111000#),
+         (2#100111#, 2#011000#),
+         (2#101001#, 2#101001#),
+         (2#101010#, 2#101010#),
+         (2#001011#, 2#001011#),
+         (2#101100#, 2#101100#),
+         (2#001101#, 2#001101#),
+         (2#001110#, 2#001110#),
+         (2#111010#, 2#000101#),
+         (2#110110#, 2#001001#),
+         (2#110001#, 2#110001#),
+         (2#110010#, 2#110010#),
+         (2#010011#, 2#010011#),
+         (2#110100#, 2#110100#),
+         (2#010101#, 2#010101#),
+         (2#010110#, 2#010110#),
+         (2#010111#, 2#101000#),
+         (2#110011#, 2#001100#),
+         (2#011001#, 2#011001#),
+         (2#011010#, 2#011010#),
+         (2#011011#, 2#100100#),
+         (2#011100#, 2#011100#),
+         (2#011101#, 2#100010#),
+         (2#011110#, 2#100001#),
+         (2#110101#, 2#001010#));
         
         Table_3to4_Bits: array(Byte range 0 .. 7, 0 .. 3) of Ten_Bits :=
         --RD -1, RD +1
-	    ((2#1101#, 2#0010#, -1, -1),
-	     (2#1001#, 2#1001#, -1, -1),
-	     (2#1010#, 2#1010#, -1, -1),
-	     (2#0011#, 2#1100#, -1, -1),
-	     (2#1011#, 2#0100#, -1, -1),
-	     (2#0101#, 2#0101#, -1, -1),
-	     (2#0110#, 2#0110#, -1, -1),
+        ((2#1101#, 2#0010#, -1, -1),
+         (2#1001#, 2#1001#, -1, -1),
+         (2#1010#, 2#1010#, -1, -1),
+         (2#0011#, 2#1100#, -1, -1),
+         (2#1011#, 2#0100#, -1, -1),
+         (2#0101#, 2#0101#, -1, -1),
+         (2#0110#, 2#0110#, -1, -1),
 
-	    --||---Primary----|||---Alternate---||
-	    --RD -1   , RD +1  | RD -1  , RD +1
-	     (2#0111#, 2#1000#, 2#1110#, 2#0001#));    
+        --||---Primary----|||---Alternate---||
+        --RD -1   , RD +1  | RD -1  , RD +1
+         (2#0111#, 2#1000#, 2#1110#, 2#0001#));    
         
             
         NO  : Boolean := False;
@@ -179,37 +179,37 @@ begin
         Changes_Running_Disp: array(Byte range 0 .. 31) of Boolean :=
         (
             NO ,
-	        NO ,
-	        NO ,
-	        YES,
-	        NO ,
-	        YES,
-	        YES,
-	        YES,
-	        NO ,
-	        YES,
-	        YES,
-	        YES,
-	        YES,
-	        YES,
-	        YES,
-	        NO ,
-	        NO ,
-	        YES,
-	        YES,
-	        YES,
-	        YES,
-	        YES,
-	        YES,
-	        NO ,
-	        NO ,
-	        YES,
-	        YES,
-	        NO ,
-	        YES,
-	        NO ,
-	        NO ,
-	        NO
+            NO ,
+            NO ,
+            YES,
+            NO ,
+            YES,
+            YES,
+            YES,
+            NO ,
+            YES,
+            YES,
+            YES,
+            YES,
+            YES,
+            YES,
+            NO ,
+            NO ,
+            YES,
+            YES,
+            YES,
+            YES,
+            YES,
+            YES,
+            NO ,
+            NO ,
+            YES,
+            YES,
+            NO ,
+            YES,
+            NO ,
+            NO ,
+            NO
         );
         
         Old_Right, Old_Left: Byte := 0;
@@ -230,19 +230,19 @@ begin
             
             if Old_Left < 2#111# then
                 --when the encoding of the right bits is the same regardless
-		        --of the running disparity (7 is an exception because it has 
-		        --equal 0s and 1s), the 5 bit encoding for (-) RD is paired with 
-		        --the 3 bit encoding for (-) RD, and (+) with (+)
-		        if Encoded_Right_Neg = Encoded_Right_Pos or Old_Right = 7 then
-		            Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 0);
-		            Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 1);
-	            else
-	                Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 1);
-		            Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 0);
-	            end if;
+                --of the running disparity (7 is an exception because it has 
+                --equal 0s and 1s), the 5 bit encoding for (-) RD is paired with 
+                --the 3 bit encoding for (-) RD, and (+) with (+)
+                if Encoded_Right_Neg = Encoded_Right_Pos or Old_Right = 7 then
+                    Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 0);
+                    Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 1);
+                else
+                    Encoded_Left_Neg := Table_3to4_Bits(Old_Left, 1);
+                    Encoded_Left_Pos := Table_3to4_Bits(Old_Left, 0);
+                end if;
             
             --when the 3 left bits to encode are "111", there are unique
-	        --circumstances where an alternate output needs to be used
+            --circumstances where an alternate output needs to be used
             else
                 if Encoded_Right_Neg = Encoded_Right_Pos or Old_Right = 7 then
                     if Old_Right /= 17 and Old_Right /= 18 and Old_Right /= 20 then
