@@ -1,56 +1,126 @@
-with Ada.Containers.Ordered_Maps;
 package body IBM_8b_10b_Encoder is    
-    
-    package Ten_to_Eight_Map is new Ada.Containers.Ordered_Maps(Ten_Bits, Byte);
-    use Ten_to_Eight_Map;
-    
-    type Encoder_Table_Entry is
+    type Encoder_Entry is
     record
-        RD_Neg_Val : Ten_Bits;
-        RD_Pos_Val : Ten_Bits;
-        RD_Changes : Boolean;
+        RD_Neg_Val: Ten_Bits;
+        RD_Pos_Val: Ten_Bits;
+        RD_Changes: Boolean;
     end record;
     
-    Table_8to10_Bits: array(Byte) of Encoder_Table_Entry;
-    Table_10to8_Bits_RD_Neg: Map;
-    Table_10to8_Bits_RD_Pos: Map;
+    type Decoder_Entry is
+    record
+        Key: Ten_Bits := 0;
+        Value: Byte := 0;
+    end record;
     
-    procedure Encode(B: in Byte; T: out Ten_Bits; RD: in out Running_Disp) is
+    type Decoder_Table is array(Natural range 0 .. 255) of Decoder_Entry;
+    
+    Encoder_Table: array(Byte) of Encoder_Entry;
+    Decoder_Table_RD_Neg: Decoder_Table;
+    Decoder_Table_RD_Pos: Decoder_Table;
+    
+    procedure Encode(   B: in Byte; 
+                        T: out Ten_Bits; 
+                        RD: in out Running_Disp) is
     begin
         case RD is
-            when Neg_1 =>   T := Table_8to10_Bits(B).RD_Neg_Val;
-                            case Table_8to10_Bits(B).RD_Changes is
+            when Neg_1 =>   T := Encoder_Table(B).RD_Neg_Val;
+                            case Encoder_Table(B).RD_Changes is
                                 when False => RD := Neg_1;
                                 when True  => RD := Pos_1;
                             end case;
-            when Pos_1 =>   T := Table_8to10_Bits(B).RD_Pos_Val;
-                            case Table_8to10_Bits(B).RD_Changes is
+            when Pos_1 =>   T := Encoder_Table(B).RD_Pos_Val;
+                            case Encoder_Table(B).RD_Changes is
                                 when False => RD := Pos_1;
                                 when True  => RD := Neg_1;
                             end case;
         end case;
     end Encode;
+    
+    function Compute_Hash_Index(K: Ten_Bits;
+                                Table_Size: Natural) return Natural is
+    begin
+        return Natural(K) mod Table_Size;
+    end Compute_Hash_Index;
+    
+    procedure Insert(   Table: in out Decoder_Table; 
+                        Key: in Ten_Bits; 
+                        Value: in Byte;
+                        Success: out Boolean ) is
+        I: Natural := 0;
+        Idx, Idx_Modded: Natural;
+    begin
+        Success := False;
+        Idx := Compute_Hash_Index(Key, Table'Length);
+        Idx_Modded := Idx;
+        loop
+            if Table(Idx_Modded).Key = 0 or Table(Idx_Modded).Key = Key then
+                Table(Idx_Modded).Key := Key;
+                Table(Idx_Modded).Value := Value;
+                Success := True;
+            else
+                I := I + 1;
+                --Note: this variant of the quadratic probing algorithm
+                --is most effective with tables with 2^n entries, where
+                --n is any positive integer. Coincidentally, this works
+                --perfectly for our encoding table. :D
+                Idx_Modded := (Idx + (I + I**2)/2) mod Table'Length;
+            end if;
+            exit when Success or I >= Table'Length;
+        end loop;
+    end Insert;
+    
+    procedure Find_Entry(   Table: in Decoder_Table; 
+                            Key: in Ten_Bits; 
+                            Value: out Byte;
+                            Success: out Boolean) is
+        I: Natural := 0;
+        Idx, Idx_Modded: Natural;
+    begin
+        Success := False;
+        Idx := Compute_Hash_Index(Key, Table'Length);
+        Idx_Modded := Idx;
+        loop
+            if Table(Idx_Modded).Key = Key then
+                Value := Table(Idx_Modded).Value;
+                Success := True;
+            else
+                I := I + 1;
+                Idx_Modded := (Idx + (I + I**2)/2) mod Table'Length;
+            end if;
+            exit when Success or I >= Table'Length;
+        end loop;
+    end Find_Entry;
 
-    --To verify that Running Disparity is being preserved, use this version
-    procedure Decode(T: in Ten_Bits; B: out Byte; RD: in out Running_Disp) is
+    --To verify that Running Disparity is being preserved, use this version.
+    procedure Decode(   T: in Ten_Bits; 
+                        B: out Byte; 
+                        RD: in out Running_Disp; 
+                        Success: out Boolean) is
     begin
         case RD is
-            when Neg_1 =>   B := Element(Table_10to8_Bits_RD_Neg, T);
-                            case Table_8to10_Bits(B).RD_Changes is
-                                when False => RD := Neg_1;
-                                when True  => RD := Pos_1;
-                            end case;
-            when Pos_1 =>   B := Element(Table_10to8_Bits_RD_Pos, T);
-                            case Table_8to10_Bits(B).RD_Changes is
-                                when False => RD := Pos_1;
-                                when True  => RD := Neg_1;
-                            end case;
+            when Neg_1 =>
+                Find_Entry(Decoder_Table_RD_Neg, T, B, Success);
+                case Encoder_Table(B).RD_Changes is
+                    when False => RD := Neg_1;
+                    when True  => RD := Pos_1;
+                end case;
+            when Pos_1 =>
+                Find_Entry(Decoder_Table_RD_Pos, T, B, Success);
+                case Encoder_Table(B).RD_Changes is
+                    when False => RD := Pos_1;
+                    when True  => RD := Neg_1;
+                end case;
         end case;
     end Decode;
 
-    procedure Decode(T: in Ten_Bits; B: out Byte) is
+    procedure Decode(   T: in Ten_Bits; 
+                        B: out Byte; 
+                        Success: out Boolean) is
     begin
-        null;
+        Find_Entry(Decoder_Table_RD_Neg, T, B, Success);
+        if not Success then
+            Find_Entry(Decoder_Table_RD_Pos, T, B, Success);
+        end if;
     end Decode;
 begin
     declare
@@ -146,6 +216,8 @@ begin
         Encoded_Left_Pos, Encoded_Left_Neg, 
         Encoded_Right_Pos, Encoded_Right_Neg: Ten_Bits := 0;
         RD_Change_Idx: Byte;
+        
+        Insertion_Error: exception;
     begin
         for I in Byte range 0 .. 255 loop
             Old_Right := I and 2#000_11111#;
@@ -193,7 +265,8 @@ begin
             RD_Change_Idx := I mod 32;
             
             declare
-                E: Encoder_Table_Entry;
+                E: Encoder_Entry;
+                Check: Boolean;
             begin
                 --Add an entry to the encoding table...
                 E.RD_Neg_Val := (Encoded_Left_Neg * 2**6) or Encoded_Right_Neg;
@@ -203,12 +276,15 @@ begin
                 else
                     E.RD_Changes := not Changes_Running_Disp(RD_Change_Idx);
                 end if;
-                Table_8to10_Bits(I) := E;
+                Encoder_Table(I) := E;
                 
                 --...and add the flipped keys and values to the decoding tables
-                Insert(Table_10to8_Bits_RD_Neg, E.RD_Neg_Val, I);
-                Insert(Table_10to8_Bits_RD_Pos, E.RD_Pos_Val, I);
+                Insert(Decoder_Table_RD_Neg, E.RD_Neg_Val, I, Check);
+                Insert(Decoder_Table_RD_Pos, E.RD_Pos_Val, I, Check);
+                
+                if not Check then raise Insertion_Error; end if;
             end;
         end loop;
     end;
+    
 end IBM_8b_10b_Encoder;
