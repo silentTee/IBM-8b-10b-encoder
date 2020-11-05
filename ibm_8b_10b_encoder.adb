@@ -1,3 +1,5 @@
+--Copyright (c) 2019 Alex Tsantilis under the MIT License
+
 package body IBM_8b_10b_Encoder is    
     type Encoder_Entry is
     record
