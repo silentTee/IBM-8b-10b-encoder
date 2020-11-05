@@ -1,3 +1,5 @@
+--Copyright (c) 2019 Alex Tsantilis under the MIT License
+
 package IBM_8b_10b_Encoder is
 
     type Byte is mod 2**8;
